@@ -1,0 +1,17 @@
+Description:
+    Declaratively supply a block of code to be fired for a resource at a given datetime column on that model.
+
+    This generator takes care of adding the block declaration and the db columns.
+
+Example:
+    rails generate chron:observation my_model my_timestamp
+
+    rails g chron:observation auction close_at
+
+    This will create:
+        db/migrations/add_chron_observation_timestamps_for_close_at_to_auctions.rb
+
+    And will modify:
+        app/models/auction.rb by inserting the `at_time :close_at do;end` block and including `Chron::Observable` if needed
+
+    Now you could add code that does anything for that object at that given time in the background.

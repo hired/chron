@@ -1,0 +1,10 @@
+class AddChronObservationTimestampsFor<%= column_name.camelize %>To<%= table_name.camelize %> < ActiveRecord::Migration
+  def self.change
+    change_table(:<%= table_name %>) do |t|
+      t.add_column :<%= column_name %>__observation_started_at, :datetime
+      t.add_column :<%= column_name %>__observation_completed_at, :datetime
+    end
+    add_index :<%= table_name %>, :<%= column_name %>__observation_started_at
+    add_index :<%= table_name %>, :<%= column_name %>__observation_completed_at
+  end
+end

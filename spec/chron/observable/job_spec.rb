@@ -4,9 +4,9 @@ describe Chron::Observable::Job do
   describe 'perform' do
     describe 'triggering individual record jobs' do
       before do
-        5.times do |n|
-          Auction.create(start_at: (Time.current - 15.minutes) + 5 * n.minutes)
-        end
+        Auction.create(start_at: Time.current - 10.minutes)
+        Auction.create(start_at: Time.current)
+        Auction.create(start_at: Time.current + 10.minutes)
       end
 
       after do
@@ -23,11 +23,24 @@ describe Chron::Observable::Job do
         Chron::Observable::Job.perform_now('Auction')
       end
 
-      # this test explicitly covers a case where the DB-setup code for this suite
-      # renders the first test to fail silently.
-      it 'sanity test calls record jobs for some records' do
-        expect(Chron::Observable::RecordJob).to receive(:perform_later).at_least(1)
-        Chron::Observable::Job.perform_now('Auction')
+      describe 'preventing separate polling jobs from colliding when queue size is large' do
+
+        it 'only schedules new RecordJobs for records that have not previously started an observation' do
+          auctions.update_all start_at__observation_started_at: Time.current
+          expect(Chron::Observable::RecordJob).to_not receive(:perform_later)
+
+          Chron::Observable::Job.perform_now('Auction')
+        end
+
+        it 'sets observation_started_at value so future pollers skip' do
+          expect(Chron::Observable::RecordJob).to receive(:perform_later).at_least(1)
+
+          Timecop.freeze do
+            expect {
+              Chron::Observable::Job.perform_now('Auction')
+            }.to change { auctions.first.reload.start_at__observation_started_at}.from(nil).to(Time.current)
+          end
+        end
       end
     end
   end
