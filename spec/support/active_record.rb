@@ -7,6 +7,8 @@ ActiveRecord::Migrator.up "db/migrate"
 ActiveRecord::Migration.create_table :auctions do |t|
   t.string :name
   t.datetime :start_at
+  t.datetime :start_at__observation_started_at
+  t.datetime :start_at__observation_completed_at
   t.datetime :close_at
 
   t.timestamps null: false
@@ -15,7 +17,8 @@ end
 ActiveRecord::Migration.create_table :puppies do |t|
   t.string :name
   t.datetime :play_at
-
+  t.datetime :play_at__observation_started_at
+  t.datetime :play_at__observation_completed_at
   t.timestamps null: false
 end
 
