@@ -14,28 +14,25 @@ module Chron
 
   def self.observables_for(class_name)
     observable = OBSERVABLES[class_name]
-    raise UnknownObservable if observable.blank?
+    raise UnknownObservable.new("#{class_name}") if observable.blank?
     observable.keys
   end
 
   def self.observation(class_name, column)
-    observation = OBSERVABLES[class_name][column]
-    raise UnknownObservation if observation.blank?
+    observation = OBSERVABLES[class_name][column.to_sym]
+    raise UnknownObservation.new("#{class_name} #{column}") if observation.blank?
     observation
   end
 
   def self.add_observation(class_name, column, block)
     observable = OBSERVABLES[class_name]
-    raise ExistingObservable if observable[column].present?
-    observable[column] = block
+    raise ExistingObservable.new("#{class_name} #{column}") if observable[column.to_sym].present?
+    observable[column.to_sym] = block
   end
 
   class ExistingObservable < StandardError; end
   class UnknownObservable < StandardError; end
   class UnknownObservation < StandardError; end
-
-  POLLING_RANGE = -> { (Time.current - POLLING_WINDOW)..(Time.current + POLLING_WINDOW) }
-  POLLING_WINDOW = 5 * 60
 end
 
 require "chron/job"

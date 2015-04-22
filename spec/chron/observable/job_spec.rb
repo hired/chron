@@ -3,17 +3,15 @@ require 'spec_helper'
 describe Chron::Observable::Job do
   describe 'perform' do
     describe 'triggering individual record jobs' do
-      before do
-        Auction.create(start_at: Time.current - 10.minutes)
-        Auction.create(start_at: Time.current)
-        Auction.create(start_at: Time.current + 10.minutes)
-      end
+      let!(:auction) { Auction.create(start_at: Time.current - 10.minutes) }
+      let!(:auction2) { Auction.create(start_at: Time.current) }
+      let!(:auction3) { Auction.create(start_at: Time.current + 10.minutes) }
 
       after do
         Auction.delete_all
       end
 
-      let(:auctions) { Auction.where(start_at: Chron::POLLING_RANGE.call) }
+      let(:auctions) { Auction.where('start_at < ?', Time.current) }
 
       it 'fires jobs for each instance within ' do
         auctions.each do |auction|
@@ -21,6 +19,7 @@ describe Chron::Observable::Job do
         end
 
         Chron::Observable::Job.perform_now('Auction')
+        expect(auction3.reload.start_at__observation_started_at).to be_nil
       end
 
       describe 'preventing separate polling jobs from colliding when queue size is large' do

@@ -29,8 +29,8 @@ class Chron::Observable::Job < Chron::Job
 
     def unobserved_records
       observable_class
-          .where(column => Chron::POLLING_RANGE.call, poller_demarcation => nil)
-          .select(:id)
+          .where(column => Time.at(0)...polling_time)
+          .where(poller_demarcation => nil)
     end
 
     def poller_demarcation
@@ -38,7 +38,11 @@ class Chron::Observable::Job < Chron::Job
     end
 
     def demarcate_observed_records
-      unobserved_records.update_all poller_demarcation => Time.current
+      unobserved_records.update_all poller_demarcation => polling_time
+    end
+
+    def polling_time
+      @polling_time ||= Time.current
     end
   end
 end
