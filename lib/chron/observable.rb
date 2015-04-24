@@ -12,7 +12,7 @@ module Chron::Observable
       if Chron.observations_for(to_s).include?(column.to_sym)
         Chron.add_observation(to_s, column, block)
       else
-        raise Chron::UnregisteredObservation
+        raise Chron::UnregisteredObservation.new(to_s, column)
       end
     end
   end

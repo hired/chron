@@ -33,8 +33,8 @@ module Chron
   class ExistingObservation < StandardError; end
   class UnknownObservable < StandardError; end
   class UnknownObservation < StandardError
-    def initialize(obj)
-      super("Please declare #{obj} block in app/models/path-to-#{obj.underscore}.rb")
+    def initialize(class_name, column_name)
+      super("Please declare #{column_name} block in app/models/path-to-#{class_name.underscore}.rb")
     end
   end
   class UnregisteredObservable < StandardError
@@ -43,8 +43,8 @@ module Chron
     end
   end
   class UnregisteredObservation < StandardError
-    def initialize(obj)
-      super("Please declare #{obj} in config/initializers/chron.rb")
+    def initialize(class_name, column)
+      super("Please declare #{class_name} & #{column} in config/initializers/chron.rb")
     end
   end
 

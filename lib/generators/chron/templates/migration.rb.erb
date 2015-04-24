@@ -1,10 +1,38 @@
 class AddChronObservationTimestampsFor<%= column_name.camelize %>To<%= table_name.camelize %> < ActiveRecord::Migration
-  def self.change
-    change_table(:<%= table_name %>) do |t|
-      t.add_column :<%= column_name %>__observation_started_at, :datetime
-      t.add_column :<%= column_name %>__observation_completed_at, :datetime
-    end
+  def up
+    add_column :<%= table_name %>, :<%= column_name %>__observation_started_at, :datetime
+    add_column :<%= table_name %>, :<%= column_name %>__observation_completed_at, :datetime
     add_index :<%= table_name %>, :<%= column_name %>__observation_started_at
     add_index :<%= table_name %>, :<%= column_name %>__observation_completed_at
+    mark_existing_records_as_processed
+    <% if deprecated_reactor_event.present? %>
+    unschedule_sidekiq_jobs
+    <% end %>
   end
+
+  def down
+    remove_column :<%= table_name %>, :<%= column_name %>__observation_started_at
+    remove_column :<%= table_name %>, :<%= column_name %>__observation_completed_at
+  end
+
+  #
+  # Remember to initialize records correctly if this is a live database.
+  #  If you don't, you may cause a bunch of chron blocks to get scheduled.
+  #
+  def mark_existing_records_as_processed
+    execute %Q{
+        UPDATE <%= table_name %>
+        SET <%= column_name %>__observation_started_at = <%= column_name %>,
+            <%= column_name %>__observation_completed_at = <%= column_name %>
+        WHERE <%= column_name %> < now();
+      }
+  end
+
+  <% if deprecated_reactor_event.present? %>
+  def unschedule_sidekiq_jobs
+    r = Sidekiq::ScheduledSet.new
+    jobs = r.select {|retri| retri.klass == 'Reactor::Event' && retri.args.first == '<%= deprecated_reactor_event %>' }
+    jobs.each(&:delete)
+  end
+  <% end %>
 end

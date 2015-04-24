@@ -1,10 +1,29 @@
 module Chron
   module Generators
     class ObservationGenerator < ::Rails::Generators::Base
+      CONFIG_PATH = 'config/initializers/chron.rb'
       source_root File.expand_path('../templates', __FILE__)
       argument :model, type: :string, required: true
       argument :column_name, type: :string, required: true
-      argument :table_name_arg, type: :string, required: false
+      argument :deprecated_reactor_event, type: :string, default: ''
+
+      def add_configuration
+        template 'configuration.rb.erb', CONFIG_PATH unless File.exists?(CONFIG_PATH)
+      end
+
+      def add_observable_to_configuration
+        unless config_file.match(/observe '#{model}' do/)
+          gsub_file CONFIG_PATH, /(Chron.configure do)/mi do |match|
+            "#{match}\n  observe '#{model}' do\nend\n"
+          end
+        end
+      end
+
+      def add_observation_to_configuration
+        gsub_file CONFIG_PATH, /(observe '#{model}' do)/mi do |match|
+          "#{match}\n    at :#{column_name}"
+        end
+      end
 
       def mix_observable_into_model
         return if model_already_includes_chron?
@@ -18,8 +37,9 @@ module Chron
           say 'Model already observes this column. Please add your logic to the existing observation block.'
           return
         end
+        optional_publish = deprecated_reactor_event.present? && "publish :#{deprecated_reactor_event}"
         gsub_file model_path, /(include Chron::Observable)/mi do |match|
-          "#{match}\n\n  at_time :#{column_name} do\n    # do anything for this resource (self) at the given time\n  end\n"
+          "#{match}\n\n  at_time(:#{column_name}) { #{optional_publish} }"
         end
       end
 
@@ -34,7 +54,7 @@ module Chron
       end
 
       def table_name
-        table_name_arg || model.gsub('/','_').underscore.pluralize
+        model.constantize.table_name
       end
 
       def model_already_includes_chron?
@@ -47,6 +67,10 @@ module Chron
 
       def model_file_already_observes_column?
         model_file.match(/at_time :#{column_name}/)
+      end
+
+      def config_file
+        @config_file ||= File.read(CONFIG_PATH)
       end
     end
   end
