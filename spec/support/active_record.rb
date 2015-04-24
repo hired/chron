@@ -22,6 +22,16 @@ ActiveRecord::Migration.create_table :puppies do |t|
   t.timestamps null: false
 end
 
+Chron.configure do
+  observe 'Auction' do
+    at :start_at
+  end
+
+  observe 'Puppy' do
+    at :play_at
+  end
+end
+
 class Auction < ActiveRecord::Base
   include Chron::Observable
 

@@ -1,6 +1,6 @@
 class Chron::Observable::Job < Chron::Job
   def perform(class_name)
-    Chron.observables_for(class_name).each do |column|
+    Chron.observations_for(class_name).each do |column|
       AggregateObservation.new(class_name, column).perform
     end
   end

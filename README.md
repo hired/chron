@@ -36,26 +36,47 @@ Or install it yourself as:
 
 ## Usage
 
-#### Declaring As Observable
+#### Generators
+
+To add a new observation, one can simply run
+
+```
+rails g chron:observation Course close_at
+```
+
+which just automates the following boilerplate.
+
+#### Declaring Observations
+
+In order to play well with rails autoload, you must tell the poller
+about your observable resources and their columns by creating a `config/initializers/chron.rb` file.
+
+```ruby
+Chron.configure do
+  # model name provided as a string to avoid an autoload hit on boot
+  observe 'Course' do
+    at :close_at
+  end
+end
+
+```
+
+#### Supplying Observation Logic
 
 Mix `Chron::Observable` into `ActiveRecord::Base` children that you want to declare observations against.
+You can provide an arbitrary block of code to be fired against a given record at the time stored as the value in that column.
+
 
 ```ruby
 class Course < ActiveRecord::Base
   include Chron::Observable
-end
-```
 
-#### Supplying Observations
-
-You can provide an arbitrary block of code to be fired against a given record at the time stored as the value in that column.
-
-```ruby
-at_time :close_at do
-  do_anything_for_this_resource
-  # self == self.class.find(id)
-  # self is an instance whose :close_at is now
-  # this block gets fired at the :close_at time
+  at_time :close_at do
+    do_anything_for_this_resource
+    # self == self.class.find(id)
+    # self is an instance whose :close_at is now
+    # this block gets fired at the :close_at time
+  end
 end
 ```
 

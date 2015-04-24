@@ -12,7 +12,7 @@ module Chron
     OBSERVABLES[class_name.to_s] = {}
   end
 
-  def self.observables_for(class_name)
+  def self.observations_for(class_name)
     observable = OBSERVABLES[class_name]
     raise UnknownObservable.new("#{class_name}") if observable.blank?
     observable.keys
@@ -26,13 +26,42 @@ module Chron
 
   def self.add_observation(class_name, column, block)
     observable = OBSERVABLES[class_name]
-    raise ExistingObservable.new("#{class_name} #{column}") if observable[column.to_sym].present?
+    raise ExistingObservation.new("#{class_name} #{column}") if observable[column.to_sym].present?
     observable[column.to_sym] = block
   end
 
-  class ExistingObservable < StandardError; end
+  class ExistingObservation < StandardError; end
   class UnknownObservable < StandardError; end
-  class UnknownObservation < StandardError; end
+  class UnknownObservation < StandardError
+    def initialize(obj)
+      super("Please declare #{obj} block in app/models/path-to-#{obj.underscore}.rb")
+    end
+  end
+  class UnregisteredObservable < StandardError
+    def initialize(obj)
+      super("Please declare #{obj} in config/initializers/chron.rb")
+    end
+  end
+  class UnregisteredObservation < StandardError
+    def initialize(obj)
+      super("Please declare #{obj} in config/initializers/chron.rb")
+    end
+  end
+
+  def self.configure(&block)
+    instance_exec &block if block_given?
+  end
+
+  def self.observe(model_name)
+    add_observable_resource model_name
+    @observing = model_name
+    yield
+    @observing = nil
+  end
+
+  def self.at(column_name)
+    add_observation @observing, column_name, nil
+  end
 end
 
 require "chron/job"
