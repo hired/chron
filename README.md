@@ -80,6 +80,19 @@ class Course < ActiveRecord::Base
 end
 ```
 
+##### Testing Observations
+
+An rspec helper is provided to help you avoid reaching into the internals to test your block. Just provide your block expectations to this matcher.
+
+```ruby
+require 'chron/testing/matchers' # usually goes in `spec_helper.rb`
+
+# in model_spec.rb
+describe 'chron blocks' do
+  it { is_expected.to at_time(:close_at, -> { change(Course.closed, :count).by(1) }) }
+end
+```
+
 #### Setting Up The Poller
 
 `Chron::Job` will poll observable records and trigger matching observation blocks.
