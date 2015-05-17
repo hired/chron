@@ -6,7 +6,7 @@ Description:
 Example:
     rails generate chron:observation my_model my_timestamp
 
-    rails g chron:observation auction close_at
+    rails g chron:observation Auction close_at
 
     This will create:
         db/migrations/add_chron_observation_timestamps_for_close_at_to_auctions.rb

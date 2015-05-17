@@ -12,22 +12,22 @@ module Chron
       end
 
       def add_observable_to_configuration
-        unless config_file.match(/observe '#{model}' do/)
+        unless config_file.match(/observe '#{model_name}' do/)
           gsub_file CONFIG_PATH, /(Chron.configure do)/mi do |match|
-            "#{match}\n  observe '#{model}' do\nend\n"
+            "#{match}\n  observe '#{model_name}' do\n  end\n"
           end
         end
       end
 
       def add_observation_to_configuration
-        gsub_file CONFIG_PATH, /(observe '#{model}' do)/mi do |match|
+        gsub_file CONFIG_PATH, /(observe '#{model_name}' do)/mi do |match|
           "#{match}\n    at :#{column_name}"
         end
       end
 
       def mix_observable_into_model
         return if model_already_includes_chron?
-        gsub_file model_path, /(class #{model.camelize.gsub('/', '::')} < .*$)/i do |match|
+        gsub_file model_path, /(class #{model_name} < .*$)/i do |match|
           "#{match}\n  include Chron::Observable"
         end
       end
@@ -53,8 +53,12 @@ module Chron
         "app/models/#{ model }.rb"
       end
 
+      def model_name
+        model.camelize.gsub('/', '::')
+      end
+
       def table_name
-        model.constantize.table_name
+        model.camelize.constantize.table_name
       end
 
       def model_already_includes_chron?
