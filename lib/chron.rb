@@ -30,6 +30,10 @@ module Chron
     observable[column.to_sym] = block
   end
 
+  def self.execute_observation(record, column)
+    record.instance_eval &observation(record.class.to_s, column)
+  end
+
   class ExistingObservation < StandardError; end
   class UnknownObservable < StandardError; end
   class UnknownObservation < StandardError

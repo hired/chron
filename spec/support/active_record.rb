@@ -37,6 +37,7 @@ class Auction < ActiveRecord::Base
 
   at_time :start_at do
     puppies!
+    muppies! if name == 'Muppies'
   end
 end
 
